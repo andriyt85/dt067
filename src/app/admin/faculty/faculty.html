@@ -5,30 +5,35 @@
                 <table>
                     <thead>
                     <tr>
-                        <th colspan="2">Факультети</th>
-                        <th class="addGroup" data-target="#addGroup" data-toggle="modal">Додати новий факультет</th>
+                        <th colspan="5">Факультети</th>
+                        <th class="addGroup" data-target="#addGroup" data-toggle="modal">
+                            <a ui-sref="admin-home.newFaculty">Додати новий Факультет</a>
+                        </th>
                     </tr>
                     <tr>
-                        <th>№ п/п</th>
-                        <th>Назва факультету</th>
-                        <th>Опис</th>
+                        <th>№</th>
+                        <th>Назва Факультету</th>
+                        <th>Опис факультету</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr ng-repeat="faculty in faculty.list">
-                        <td>{{$index  + 1}}</td>
+                        <td>{{$index + (faculty.currentPage - 1)*10 + 1}}</td>
                         <td>{{::faculty.faculty_name}}</td>
                         <td>{{::faculty.faculty_description}}</td>
                     </tr>
                     </tbody>
                 </table>
-                <uib-pagination
-                        total-items="faculty.totalFaculties.numberOfRecords"
-                        ng-model="faculty.currentPage"
-                        ng-change="faculty.pageChanged()"
-                        previous-text="&lsaquo;"
-                        next-text="&rsaquo;">
-                </uib-pagination>
+
+                <div class="">
+                    <uib-pagination
+                            total-items="faculties.total.Faculties.numberOfRecords"
+                            ng-model="faculties.currentPage"
+                            ng-change="faculty.pageChanged()"
+                            previous-text="&lsaquo;"
+                            next-text="&rsaquo;">
+                    </uib-pagination>
+                </div>
 
             </div>
 

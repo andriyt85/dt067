@@ -1,13 +1,13 @@
 <div class="modal-header">
-    <h3 class="modal-title">Додати новий предмет</h3>
+    <h3 class="modal-title">Редагувати предмет</h3>
 </div>
 <div class="modal-body">
-    <form class="form-horizontal" name="newSubjectForm" role="form">
+    <form class="form-horizontal" name="editSubjectForm" role="form">
         <div class="form-group">
             <label class="control-label col-sm-2" for="name">Назва предмету: </label>
             <div class="col-sm-10">
                 <input type="text" class="form-control" id="name" required
-                placeholder="Напиши назву предмету" ng-model="subjects.subject.subject_name">
+                      ng-model="subjects.currentSubject.subject_name">
             </div>
             <div ng-if="">Назва предмету повинна містити тільки букви</div>
         </div>
@@ -15,14 +15,14 @@
             <label class="control-label col-sm-2" for="description">Опис предмету: </label>
             <div class="col-sm-10">
                 <input type="text" class="form-control" id="description" required
-                placeholder="Додай опис предмету" ng-model="subjects.subject.subject_description">
+                       ng-model="subjects.currentSubject.subject_description">
             </div>
         </div>
     </form>
 </div>
 <div class="modal-footer">
-    <button class="btn btn-primary" type="button" ng-click="subjects.addSubject()"
-            ng-disabled="newSubjectForm.$invalid"> Додати предмет
+    <button class="btn btn-primary" type="button" ng-click="subjects.updateSubject()"
+            ng-disabled="editSubjectForm.$invalid"> Редагувати предмет
     </button>
     <button class="btn btn-warning" type="button" ng-click="subjects.cancelForm()">Відмінити</button>
 </div>

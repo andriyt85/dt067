@@ -56,6 +56,10 @@
         }
 
         function remove(id) {
+            if (id == 1){
+                alert("Цього адміна не дозволено видаляти");
+                return;
+            }
             adminService.deleteAdmin(id)
                 .then(activate);
         }

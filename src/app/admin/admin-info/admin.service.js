@@ -29,10 +29,6 @@
         };
 
         function deleteAdmin(id) {
-            if (id == 1){
-                alert("Цього адміна не дозволено видаляти");
-                return;
-            }
             var url = "/AdminUser/del/" + id;
             return $http.delete(url)
                 .then(complete)

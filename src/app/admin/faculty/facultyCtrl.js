@@ -3,56 +3,42 @@
 
     angular.module('app')
         .controller('facultyCtrl', facultyController);
-    facultyController.$inject = ['facultyFactory'];
+        facultyController.$inject = ['facultyService'];
 
-    function facultyController(facultyFactory) {
+    function facultyController(facultyService) {
         var self = this;
-        /******** the list of faculties*********/
         self.list = {};
-        /******** the amount of faculties*********/
+        self.faculty = {faculty_name: "", faculty_description: ""};
         self.totalFaculties = 0;
         self.currentPage = 1;
+        self.facultiesPerPage = 10;
+        var firstFacultyInList = 0;
         self.pageChanged = pageChanged;
-        /*********** message to get know what the error ***********/
         self.showErrorMessage = false;
         self.message = "Loading...";
-        self.facultyPerPage = 10;
-        var firstFacultyInList = 0;
-
+        self.addFaculty = addFaculty;
+        self.deleteFaculty = deleteFaculty;
 
         activate();
 
         function activate() {
-            facultyFactory.getRecordsRange(self.facultyPerPage, firstFacultyInList )
+            facultyService.getRecordsRange(self.facultiesPerPage, firstFacultyInList)
                 .then(getRecordsRangeComplete, getRecordsRangeFailed);
 
-            facultyFactory.countFaculties().then(success,error);
-
+            facultyService.countFaculties()
+                .then(countFacultyComplete, rejected);
         }
 
-        facultyFactory.getFaculties().then(fullfilled, rejected);
-
-
-        function pageChanged() {
-            var begin = ((self.currentPage - 1) * self.facultyPerPage);
-            facultyFactory.getRecordsRange(self.facultyPerPage, begin).then(getRecordsRangeComplete);
+        function addFaculty() {
+            facultyService.addFaculty(self.faculty)
+                .then(addFacultyComplete, rejected)
         }
 
-        function success(response) {
-            self.totalFaculties = response.data;
-        }
-        function error(response) {
-            console.log(response.status + " " + response.statusText);
+        function deleteFaculty(faculty_id) {
+            facultyService.deleteFaculty(faculty_id)
+                .then(deleteFacultyComplete, rejected);
         }
 
-        function fullfilled(response) {
-            self.list = response.data;
-            console.log(self.list)
-        }
-        function rejected(response) {
-            self.showErrorMessage = true;
-            self.message = "Error" + " " + response.status + " " + response.statusText;
-        }
         function getRecordsRangeComplete(response) {
             self.list = response.data;
         }
@@ -61,5 +47,30 @@
             self.showErrorMessage = true;
             self.message = "Error:" + " " + response.status + " " + response.statusText;
         }
+
+        function countFacultyComplete(response) {
+            self.totalFaculties = response.data;
+        }
+
+        function addFacultyComplete(response) {
+            if(response.data.response = "ok") {
+                self.faculty = {};
+            }
+        }
+
+        function deleteFacultyComplete(response) {
+            if(response.data.response == "ok") {
+                activate();
+            }
+        }
+
+        function pageChanged() {
+            var begin = ((self.currentPage - 1) * self.facultiesPerPage);
+            facultyService.getRecordsRange(self.facultiesPerPage, begin).then(getRecordsRangeComplete);
+        }
+
+        function rejected(response) {
+            console.log(response.status + " " + response.statusText);
+        }
     }
-})();
+}());

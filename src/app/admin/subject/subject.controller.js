@@ -3,20 +3,14 @@
 
     angular.module('app')
         .controller('SubjectController', subjectController);
-        subjectController.$inject = ['subjectService', '$state'];
+        subjectController.$inject = ['subjectService', 'appConstants', '$uibModal'];
 
-        var currentId = 0;
-
-        function subjectController(subjectService, $state) {
+        function subjectController(subjectService, appConstants, $uibModal) {
             var self = this;
 
         //variables
-            self.showForm = false;
-            self.hideForm = hideForm;
-            self.currentObj = {};
             self.list = {};
             self.listAllSubjects = {};
-            self.subject = {subject_name: "", subject_description: ""};
 
          //variables and methods for Pagination's panel
             self.totalSubjects = 0;
@@ -33,10 +27,9 @@
             self.getAllSubjects = getAllSubjects;
             self.getRecordsRange = getRecordsRange;
             self.countSubjects = countSubjects;
-            self.addSubject = addSubject;
             self.deleteSubject = deleteSubject;
-            self.editSubject = editSubject;
-            self.updateSubject = updateSubject;
+            self.showAddSubjectForm = showAddSubjectForm;
+            self.showEditSubjectForm = showEditSubjectForm;
 
             activate();
 
@@ -60,29 +53,9 @@
                     .then(countSubjectComplete, rejected);
             }
 
-            function addSubject() {
-                subjectService.addSubject(self.subject)
-                    .then(addSubjectComplete, rejected)
-            }
-
             function deleteSubject(subject_id) {
                 subjectService.deleteSubject(subject_id)
                     .then(deleteSubjectComplete, rejected);
-            }
-
-            function editSubject(subject) {
-                currentId = subject.subject_id;
-                self.currentObj = subject;
-                self.showForm = true;
-            }
-
-            function updateSubject() {
-                subjectService.editSubject(currentId, self.currentObj)
-                    .then(updateComplete, rejected);
-            }
-
-            function hideForm() {
-                self.showForm = false;
             }
 
             function pageChanged() {
@@ -107,31 +80,48 @@
                 self.totalSubjects = response.data;
             }
 
-            function addSubjectComplete(response) {
-                if(response.data.response = "ok") {
-                    self.subject = {};
-                    $state.go('admin-home.subject')
-                }
-            }
-
             function deleteSubjectComplete(response) {
                 if(response.data.response == "ok") {
-                    countSubjects();
+                   countSubjects();
                    pageChanged();
                 }
             }
 
-            function updateComplete(response) {
-                if(response.data.response == 'ok') {
-                    self.currentObj = {};
-                    hideForm();
-                }
+            function showAddSubjectForm() {
+                var modalInstance = $uibModal.open({
+                    templateUrl: 'app/admin/subject/add-subject.html',
+                    controller: 'SubjectModalController as subjects',
+                    resolve: {
+                        currentSubject: {}
+                    }
+                });
+                modalInstance.result.then(function() {
+                    countSubjects();
+                    pageChanged();
+                })
+            }
+
+            function showEditSubjectForm(subject) {
+                //we need this to get data of current subject and to pass it to SubjectModalController
+                // to edit current subject
+                appConstants.currentID = subject.subject_id;
+
+                var modalInstance = $uibModal.open({
+                    templateUrl: 'app/admin/subject/edit-subject.html',
+                    controller: 'SubjectModalController as subjects',
+                    resolve: {
+                        currentSubject: subject
+
+                    }
+                });
+                modalInstance.result.then(function() {
+                    pageChanged();
+                })
             }
 
             function rejected(response) {
                 console.log(response.data.response);
                 console.log(response.status + " " + response.statusText);
             }
-
         }
 })();
