@@ -3,135 +3,121 @@
 
     angular.module('app')
         .controller('SubjectController', subjectController);
-        subjectController.$inject = ['subjectService', '$state'];
+        subjectController.$inject = ['loginService', 'subjectService', '$uibModal','appConstants'];
 
-        var currentId = 0;
-
-        function subjectController(subjectService, $state) {
+        function subjectController(loginService, subjectService, $uibModal, appConstants) {
             var self = this;
 
-        //variables
-            self.showForm = false;
-            self.hideForm = hideForm;
-            self.currentObj = {};
+            //variables
             self.list = {};
-            self.listAllSubjects = {};
-            self.subject = {subject_name: "", subject_description: ""};
 
-         //variables and methods for Pagination's panel
+             //variables and methods for search and Pagination's panel
             self.totalSubjects = 0;
+            self.showSearch = true;
+            self.textSearch = "";
+            self.begin = 0;
             self.currentPage = 1;
-            self.subjectsPerPage = 10;
-            var firstSubjectInList = 0;
+            self.subjectsPerPage = appConstants.numberOfEntitiesPerPage;
+            self.numberToDisplaySubjectsOnPage = [5,10,15,20];
             self.pageChanged = pageChanged;
 
-         //variables to show error message
-            self.showErrorMessage = false;
-            self.message = "Loading...";
-
-         //Methods
-            self.getAllSubjects = getAllSubjects;
-            self.getRecordsRange = getRecordsRange;
-            self.countSubjects = countSubjects;
-            self.addSubject = addSubject;
+            //methods
+            self.getSubjects = getSubjects;
             self.deleteSubject = deleteSubject;
-            self.editSubject = editSubject;
-            self.updateSubject = updateSubject;
+            self.showAddSubjectForm = showAddSubjectForm;
+            self.showEditSubjectForm = showEditSubjectForm;
 
             activate();
 
             function activate() {
-                countSubjects();
-                getRecordsRange()
+                isLogged();
+                getSubjects().then(pageChanged);
             }
 
-            function getAllSubjects() {
-                subjectService.getSubjects()
-                    .then(getSubjectsComplete, rejected);
+            function isLogged() {
+                loginService.isLogged();
             }
 
-            function getRecordsRange() {
-                subjectService.getRecordsRange(self.subjectsPerPage, firstSubjectInList)
-                    .then(getRecordsRangeComplete, getRecordsRangeFailed);
-            }
-
-            function countSubjects() {
-                subjectService.countSubjects()
-                    .then(countSubjectComplete, rejected);
-            }
-
-            function addSubject() {
-                subjectService.addSubject(self.subject)
-                    .then(addSubjectComplete, rejected)
+            function getSubjects() {
+                return subjectService.getSubjects().then(function(response) {
+                    self.list = response.data;
+                    self.totalSubjects = response.data.length;
+                });
             }
 
             function deleteSubject(subject_id) {
-                subjectService.deleteSubject(subject_id)
-                    .then(deleteSubjectComplete, rejected);
+                var modalInstance = $uibModal.open({
+                    templateUrl: 'app/modal/templates/confirm-delete-dialog.html',
+                    controller: 'modalController as modal',
+                    backdrop: true
+                });
+                modalInstance.result.then(function() {
+                    subjectService.deleteSubject(subject_id).then(deleteSubjectComplete);
+                });
             }
-
-            function editSubject(subject) {
-                currentId = subject.subject_id;
-                self.currentObj = subject;
-                self.showForm = true;
-            }
-
-            function updateSubject() {
-                subjectService.editSubject(currentId, self.currentObj)
-                    .then(updateComplete, rejected);
-            }
-
-            function hideForm() {
-                self.showForm = false;
+            function deleteSubjectComplete(response) {
+                if(response.data.response == "ok") {
+                    $uibModal.open({
+                        templateUrl: 'app/modal/templates/confirm-dialog.html',
+                        controller: 'modalController as modal',
+                        backdrop: true
+                    });
+                    activate();
+                }
+                if(response.status === 400) {
+                    $uibModal.open({
+                        templateUrl: 'app/modal/templates/forbidden-confirm-dialog.html',
+                        controller: 'modalController as modal',
+                        backdrop: true
+                    });
+                }
             }
 
             function pageChanged() {
-                var begin = ((self.currentPage - 1) * self.subjectsPerPage);
-                subjectService.getRecordsRange(self.subjectsPerPage, begin).then(getRecordsRangeComplete);
+                self.begin = ((self.currentPage - 1) * self.subjectsPerPage);
+                self.showSearch = (self.currentPage == 1) ? true : false;
+                self.textSearch = (self.currentPage == 1) ? self.textSearch  : "";
             }
 
-            function getRecordsRangeComplete(response) {
-                self.list = response.data;
+            function showAddSubjectForm() {
+                var modalInstance = $uibModal.open({
+                    templateUrl: 'app/admin/subject/add-subject.html',
+                    controller: 'SubjectModalController as subjects',
+                    backdrop: false,
+                    resolve: {
+                        currentSubject: {}
+                    }
+                });
+                modalInstance.result.then(function() {
+                    $uibModal.open({
+                        templateUrl: 'app/modal/templates/confirm-dialog.html',
+                        controller: 'modalController as modal',
+                        backdrop: true
+                    });
+                    activate();
+                })
             }
 
-            function getRecordsRangeFailed(response) {
-                self.showErrorMessage = true;
-                self.message = "Error:" + " " + response.status + " " + response.statusText;
-            }
+            function showEditSubjectForm(subject) {
+                var modalInstance = $uibModal.open({
+                    templateUrl: 'app/admin/subject/edit-subject.html',
+                    controller: 'SubjectModalController as subjects',
+                    backdrop: false,
+                    resolve: {
+                    //the variable is needed to store data of current subject
+                    // to fill up the form of editing subject
+                        currentSubject: subject
 
-            function getSubjectsComplete(response) {
-                self.listAllSubjects = response.data;
+                    }
+                });
+                modalInstance.result.then(function() {
+                    $uibModal.open({
+                        templateUrl: 'app/modal/templates/confirm-dialog.html',
+                        controller: 'modalController as modal',
+                        backdrop: true
+                    });
+                    activate();
+                })
             }
-
-            function countSubjectComplete(response) {
-                self.totalSubjects = response.data;
-            }
-
-            function addSubjectComplete(response) {
-                if(response.data.response = "ok") {
-                    self.subject = {};
-                    $state.go('admin-home.subject')
-                }
-            }
-
-            function deleteSubjectComplete(response) {
-                if(response.data.response == "ok") {
-                    countSubjects();
-                   pageChanged();
-                }
-            }
-
-            function updateComplete(response) {
-                if(response.data.response == 'ok') {
-                    self.currentObj = {};
-                    hideForm();
-                }
-            }
-
-            function rejected(response) {
-                console.log(response.data.response);
-                console.log(response.status + " " + response.statusText);
-            }
-
         }
-})();
+}());
